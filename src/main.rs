@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use std::fs::File;
 use csv::{ByteRecord, StringRecord};
 use std::io::Write;
+use plotters::prelude::*;
 
 
 fn main() {
@@ -63,7 +65,7 @@ fn main() {
         let mut i: u8 = 0;
         for y in x {
             if i == 7 {
-                b.push_field(format!("{}", (y.parse::<f32>().unwrap() - min as f32)/ (max-min) as f32).as_str());
+                b.push_field(format!("{}", (y.parse::<f32>().unwrap() - min as f32) / (max - min) as f32).as_str());
                 break;
             }
             i += 1;
@@ -93,4 +95,80 @@ fn main() {
     kkkk = csv::Writer::from_path("filtered.csv").unwrap();
     filtered.iter().for_each(|x| kkkk.write_record(x).unwrap());
     kkkk.flush().unwrap();
+
+    let mut root_area = BitMapBackend::new("1.png", (600, 400)).into_drawing_area();
+    root_area.fill(&WHITE).unwrap();
+    let mut ctx = ChartBuilder::on(&root_area)
+        .set_label_area_size(LabelAreaPosition::Left, 40.0)
+        .set_label_area_size(LabelAreaPosition::Bottom, 40.0)
+        .set_label_area_size(LabelAreaPosition::Right, 40.0)
+        .set_label_area_size(LabelAreaPosition::Top, 40.0)
+        .caption("Кількість фільмів та серіалів за рік", ("sans-serif", 40.0))
+        .build_cartesian_2d(1900.0..2050.0, 0.0..1600.0)
+        .unwrap();
+    let mut map: HashMap<u64, u64> = HashMap::new();
+    filtered.iter().for_each(|x| {
+        match map.get_mut(&x.get(7).unwrap().parse::<u64>().unwrap()) {
+            None => { map.insert(x.get(7).unwrap().parse::<u64>().unwrap(), 1u64); }
+            Some(x) => { *x += 1; }
+        }
+        // map.entry(x.get(7).unwrap().parse::<u32>().unwrap())
+    });
+    ctx.configure_mesh().draw().unwrap();
+    ctx.draw_series(
+        map.iter().map(|(b, f)| Circle::new((*b as f64, *f as f64), 2.0f64, &BLUE)),
+    ).unwrap();
+
+    {
+        let mut root_area1 = BitMapBackend::new("2.png", (600, 400)).into_drawing_area();
+        root_area1.fill(&WHITE).unwrap();
+        let mut ctx = ChartBuilder::on(&root_area1)
+            .set_label_area_size(LabelAreaPosition::Left, 40.0)
+            .set_label_area_size(LabelAreaPosition::Bottom, 40.0)
+            .set_label_area_size(LabelAreaPosition::Right, 40.0)
+            .set_label_area_size(LabelAreaPosition::Top, 40.0)
+            .caption("Кількість фільмів  за рік", ("sans-serif", 40.0))
+            .build_cartesian_2d(1900.0..2050.0, 0.0..1600.0)
+            .unwrap();
+        let mut map: HashMap<u64, u64> = HashMap::new();
+        filtered.iter().for_each(|x| {
+            if x.get(1).unwrap().eq("Movie") {
+                match map.get_mut(&x.get(7).unwrap().parse::<u64>().unwrap()) {
+                    None => { map.insert(x.get(7).unwrap().parse::<u64>().unwrap(), 1u64); }
+                    Some(x) => { *x += 1; }
+                }
+                // map.entry(x.get(7).unwrap().parse::<u32>().unwrap())
+            }
+        });
+        ctx.configure_mesh().draw().unwrap();
+        ctx.draw_series(
+            map.iter().map(|(b, f)| Circle::new((*b as f64, *f as f64), 2.0f64, &BLUE)),
+        ).unwrap();
+    }
+    {
+        let mut root_area1 = BitMapBackend::new("3.png", (600, 400)).into_drawing_area();
+        root_area1.fill(&WHITE).unwrap();
+        let mut ctx = ChartBuilder::on(&root_area1)
+            .set_label_area_size(LabelAreaPosition::Left, 40.0)
+            .set_label_area_size(LabelAreaPosition::Bottom, 40.0)
+            .set_label_area_size(LabelAreaPosition::Right, 40.0)
+            .set_label_area_size(LabelAreaPosition::Top, 40.0)
+            .caption("Дитячий контент на амазоні щорічно", ("sans-serif", 40.0))
+            .build_cartesian_2d(1900.0..2050.0, 0.0..1600.0)
+            .unwrap();
+        let mut map: HashMap<u64, u64> = HashMap::new();
+        filtered.iter().for_each(|x| {
+            if x.get(10).unwrap().contains("Kids") {
+                match map.get_mut(&x.get(7).unwrap().parse::<u64>().unwrap()) {
+                    None => { map.insert(x.get(7).unwrap().parse::<u64>().unwrap(), 1u64); }
+                    Some(x) => { *x += 1; }
+                }
+                // map.entry(x.get(7).unwrap().parse::<u32>().unwrap())
+            }
+        });
+        ctx.configure_mesh().draw().unwrap();
+        ctx.draw_series(
+            map.iter().map(|(b, f)| Circle::new((*b as f64, *f as f64), 2.0f64, &BLUE)),
+        ).unwrap();
+    }
 }
