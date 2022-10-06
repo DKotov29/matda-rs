@@ -14,7 +14,9 @@ fn main() {
     //     println!("{:?}", record);
     // }
     // println!("{i}");
-    result.push_str(format!("Медіана: {}\n", filtered.get(filtered.len() / 2).unwrap().get(7).unwrap()).as_str());
+    let mut mm = filtered.iter().map(|x| x.get(7).unwrap().parse::<u64>().unwrap()).collect::<Vec<u64>>();
+    mm.sort();
+    result.push_str(format!("Медіана: {}\n", mm.get(filtered.len() / 2).unwrap()).as_str());
     let mut ser: u64 = 0;
     filtered.iter().for_each(|f| ser += f.get(7).unwrap().parse::<u64>().unwrap());
     ser /= filtered.len() as u64;
